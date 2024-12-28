@@ -9,6 +9,9 @@ const App: React.FC = () => {
   const [roomId, setRoomId] = useState<string | null>(null);
   const [messages, setMessages] = useState<SessionChatMessage[]>([]);
   const [typingIndicator, setTypingIndicator] = useState(false);
+  const [websocketInistialized, setNotInitializedMsg] = useState(false);
+
+  
 
   const initializeClient = () => {
     const newClient = createWebSocketClient(
@@ -18,28 +21,26 @@ const App: React.FC = () => {
       },
       (typing) => {
         console.log("Received message:", typing);
-        // if (localStorage.getItem('isTyping') == 'true') {
-        //   setTypingIndicator(true); //library issue, anyoneTyping always coming false
-        // }
-        // if (localStorage.getItem('isTyping') == 'false') {
-        //   setTypingIndicator(false);
-        // }
         setTypingIndicator(typing);
       });
     setClient(newClient);
   };
 
   const createRoom = async (nickname: string, userIcon: string) => {
+
+
     if (client) {
+      setNotInitializedMsg(false)
       const newRoomId = await client.createChatRoom(nickname, userIcon);
       setRoomId(newRoomId);
+    }else{
+      setNotInitializedMsg(true)
     }
   };
 
   const joinRoom = async (nickname: string, roomId: string, userIcon: string) => {
     if (client) {
       const previousMessages = await client.joinChatRoom(nickname, roomId, userIcon);
-
       setMessages(previousMessages.messages);
       console.log("previousMessages",previousMessages)
       setRoomId(roomId);
@@ -51,6 +52,7 @@ const App: React.FC = () => {
     <div className="flex flex-col justify-center items-center min-h-screen">
       <h1 className="text-3xl font-bold text-center mb-8">Teleparty Chat</h1>
       {!client && <button onClick={initializeClient}>Initialize WebSocket</button>}
+      {websocketInistialized?<div>{"Websocket not initialized"}</div>:""}
       {roomId ? (
         client &&
         <div className="chatRoom w-full max-w-4xl p-4 bg-white rounded-lg shadow-lg">
